@@ -37,6 +37,7 @@ module Puma
     extend  Puma::Delegation
 
     def initialize(io, env=nil)
+      $stdout.syswrite "#{Process.pid}: === Client #{io.addr} ===\n"
       @io = io
       @to_io = io.to_io
       @proto_env = env
@@ -120,6 +121,8 @@ module Puma
 
     def close
       begin
+        $stdout.syswrite "#{Process.pid}: === Client #{io.addr} ===\n"
+        $stdout.syswrite "#{caller_locations}\n"
         @io.close
       rescue IOError
         Thread.current.purge_interrupt_queue if Thread.current.respond_to? :purge_interrupt_queue

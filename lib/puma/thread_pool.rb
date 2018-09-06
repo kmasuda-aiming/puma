@@ -153,15 +153,18 @@ module Puma
     def <<(work)
       @mutex.synchronize do
         if @shutdown
+          $stdout.syswrite "work #{work.io.addr}"
           raise "Unable to add work while shutting down"
         end
 
+        $stdout.syswrite "work add todo addr=#{work.io.addr} pid=#{Process.pid}\n"
         @todo << work
 
         if @waiting < @todo.size and @spawned < @max
           spawn_thread
         end
 
+        $stdout.syswrite "work add todo signal addr=#{work.io.addr} pid=#{Process.pid}\n"
         @not_empty.signal
       end
     end
