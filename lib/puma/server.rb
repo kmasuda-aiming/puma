@@ -308,7 +308,7 @@ module Puma
 
         begin
           if queue_requests
-            $stdout.syswrite "client.eagerly_finish  addr=#{client.io.addr} pid=#{Process.pid}\n"
+            $stdout.syswrite "client.eagerly_finish  addr=#{client.remote_ip} pid=#{Process.pid}\n"
             process_now = client.eagerly_finish
           else
             client.finish
@@ -319,25 +319,25 @@ module Puma
           addr = ssl_socket.peeraddr.last
           cert = ssl_socket.peercert
 
-          $stdout.syswrite "SSLError addr=#{client.io.addr} pid=#{Process.pid}\n"
+          $stdout.syswrite "SSLError addr=#{client.remote_ip} pid=#{Process.pid}\n"
           client.close
 
           @events.ssl_error self, addr, cert, e
         rescue HttpParserError => e
-          $stdout.syswrite "HttpParserError addr=#{client.io.addr} pid=#{Process.pid}\n"
+          $stdout.syswrite "HttpParserError addr=#{client.remote_ip} pid=#{Process.pid}\n"
           client.write_400
           client.close
 
           @events.parse_error self, client.env, e
         rescue ConnectionError, EOFError
-          $stdout.syswrite "ConnectionError, EOFError addr=#{client.io.addr} pid=#{Process.pid}\n"
+          $stdout.syswrite "ConnectionError, EOFError addr=#{client.remote_ip} pid=#{Process.pid}\n"
           client.close
         else
           if process_now
-            $stdout.syswrite "process_now addr=#{client.io.addr} pid=#{Process.pid}\n"
+            $stdout.syswrite "process_now addr=#{client.remote_ip} pid=#{Process.pid}\n"
             process_client client, buffer
           else
-            $stdout.syswrite "reactor add. addr=#{client.io.addr} pid=#{Process.pid}\n"
+            $stdout.syswrite "reactor add. addr=#{client.remote_ip} pid=#{Process.pid}\n"
             client.set_timeout @first_data_timeout
             @reactor.add client
           end

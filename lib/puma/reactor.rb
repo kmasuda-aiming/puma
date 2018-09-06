@@ -172,14 +172,14 @@ module Puma
                 if c.try_to_finish
                   @app_pool << c
                   sockets.delete c
-                  $stdout.syswrite "#{Process.pid}: === reactor try_to_finish true c=#{c.io.addr}===\n"
+                  $stdout.syswrite "#{Process.pid}: === reactor try_to_finish true c=#{c.remote_ip}===\n"
                 end
 
               # Don't report these to the lowlevel_error handler, otherwise
               # will be flooding them with errors when persistent connections
               # are closed.
               rescue ConnectionError
-                $stdout.syswrite "#{Process.pid}: === reactor ConnectionError c=#{c.io.addr}===\n"
+                $stdout.syswrite "#{Process.pid}: === reactor ConnectionError c=#{c.remote_ip}===\n"
                 c.write_500
                 c.close
 
@@ -193,7 +193,7 @@ module Puma
                 addr = ssl_socket.peeraddr.last
                 cert = ssl_socket.peercert
 
-                $stdout.syswrite "#{Process.pid}: === reactor SSLError c=#{c.io.addr}===\n"
+                $stdout.syswrite "#{Process.pid}: === reactor SSLError c=#{c.remote_ip}===\n"
                 c.close
                 sockets.delete c
 
@@ -203,7 +203,7 @@ module Puma
               rescue HttpParserError => e
                 @server.lowlevel_error(e, c.env)
 
-                $stdout.syswrite "#{Process.pid}: === reactor HttpParserError c=#{c.io.addr}===\n"
+                $stdout.syswrite "#{Process.pid}: === reactor HttpParserError c=#{c.remote_ip}===\n"
                 c.write_400
                 c.close
 
@@ -213,7 +213,7 @@ module Puma
               rescue StandardError => e
                 @server.lowlevel_error(e, c.env)
 
-                $stdout.syswrite "#{Process.pid}: === reactor StandardError c=#{c.io.addr}===\n"
+                $stdout.syswrite "#{Process.pid}: === reactor StandardError c=#{c.remote_ip}===\n"
                 c.write_500
                 c.close
 
@@ -230,7 +230,7 @@ module Puma
             while @timeouts.first.timeout_at < now
               c = @timeouts.shift
               c.write_408 if c.in_data_phase
-              $stdout.syswrite "#{Process.pid}: === reactor Timeout c=#{c.io.addr}===\n"
+              $stdout.syswrite "#{Process.pid}: === reactor Timeout c=#{c.remote_ip}===\n"
               c.close
               sockets.delete c
 
@@ -318,12 +318,12 @@ module Puma
     # array. Then a value to sleep for is derived in the call to `calculate_sleep`
     def add(c)
       @mutex.synchronize do
-        $stdout.syswrite "#{Process.pid}: === reactor add #{c.io.addr}===\n"
+        $stdout.syswrite "#{Process.pid}: === reactor add #{c.remote_ip}===\n"
         @input << c
         @trigger << "*"
 
         if c.timeout_at
-          $stdout.syswrite "#{Process.pid}: === reactor timeout #{c.io.addr} #{c.timeout_at}===\n"
+          $stdout.syswrite "#{Process.pid}: === reactor timeout #{c.remote_ip} #{c.timeout_at}===\n"
           @timeouts << c
           @timeouts.sort! { |a,b| a.timeout_at <=> b.timeout_at }
 

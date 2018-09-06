@@ -37,9 +37,10 @@ module Puma
     extend  Puma::Delegation
 
     def initialize(io, env=nil)
-      $stdout.syswrite "#{Process.pid}: === Client #{io.addr} ===\n"
       @io = io
       @to_io = io.to_io
+      @remote_ip = io.to_io.peeraddr.last
+      $stdout.syswrite "#{Process.pid}: === Client #{@remote_ip} #{@io}===\n"
       @proto_env = env
       if !env
         @env = nil
@@ -66,7 +67,7 @@ module Puma
     end
 
     attr_reader :env, :to_io, :body, :io, :timeout_at, :ready, :hijacked,
-                :tempfile
+                :tempfile, :remote_ip
 
     attr_writer :peerip
 
@@ -75,7 +76,7 @@ module Puma
     forward :closed?, :@io
 
     def inspect
-      "#<Puma::Client:0x#{object_id.to_s(16)} @ready=#{@ready.inspect}>"
+      "#<Puma::Client:0x#{object_id.to_s(16)} @ready=#{@ready.inspect} @remote_ip=#{@remote_ip}>"
     end
 
     # For the hijack protocol (allows us to just put the Client object
@@ -121,7 +122,7 @@ module Puma
 
     def close
       begin
-        $stdout.syswrite "#{Process.pid}: === Client #{io.addr} ===\n"
+        $stdout.syswrite "#{Process.pid}: === Client close #{@remote_ip} #{@io} ===\n"
         $stdout.syswrite "#{caller_locations}\n"
         @io.close
       rescue IOError
